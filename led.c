@@ -43,13 +43,23 @@ ISR(TIMER2_COMPA_vect)
 ISR(TIMER2_OVF_vect)
 {
     // Turn on LED
-    PORTD &= ~(1<<DDD2);
+    if (blue>0)
+    {
+        PORTD &= ~(1<<DDD2);
+    }
 }
 
 ISR(TIMER0_OVF_vect)
 {
     // Turn on LEDs
-    PORTD &= ~((1<<DDD0)|(1<<DDD1));
+    if (red>0)
+    {
+                PORTD &= ~(1<<DDD0);
+    }
+    if (green>0)
+    {
+                PORTD &= ~(1<<DDD1);
+    }
 }
 
 ISR(TIMER0_COMPA_vect)
