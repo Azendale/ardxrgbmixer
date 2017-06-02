@@ -170,6 +170,20 @@ int main(void)
         // Set up RGB PWM pins
         DDRD |= ((1<<DDD0)|(1<<DDD1)|(1<<DDD2));
         
+        // Turn on interrupts
+        sei();
+        
+        // Set up Timer0
+        TCNT0 = 0;
+        OCR0A = red;
+        OCR0B = green;
+
+        // Set up Timer1
+        OCR1A = blue;
+        // Set wrap for Timer1
+        OCR1B = 256;
+        
+        
         uint64_t pattern = 0x00000000;
         uint8_t i = 0;
 	while (1)
