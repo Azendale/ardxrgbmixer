@@ -64,27 +64,6 @@ ISR(TIMER0_COMPB_vect)
     PORTD |= (1<<DDD1);
 }
 
-ISR(ADC_vect)
-{
-    if (0x00 == (ADMUX & 0x0F))
-    {
-        red = ADCH;
-        ADMUX = (ADMUX & 0xF8) | (1<<MUX0);
-    }
-    else if (0x01 == (ADMUX & 0x0F))
-    {
-        green = ADCH;
-        ADMUX = (ADMUX & 0xF8) | (1<<MUX1);
-        
-    }
-    else if (0x02 == (ADMUX & 0x0F))
-    {
-        blue = ADCH;
-        ADMUX = (ADMUX & 0xF8);
-    }
-    updateTimers(red, green, blue);
-}
-
 uint8_t getCharBits(uint8_t charVal)
 {
     if (0 == charVal)
@@ -185,6 +164,27 @@ void shiftInPattern(uint64_t pattern)
                 // Latch line high
                 PORTB |= (1<<DDB3);
 }
+
+ISR(ADC_vect)
+{
+    if (0x01 == (ADMUX & 0x07))
+    {
+        red = ADCH;
+        ADMUX = (ADMUX & 0xF8) | (1<<MUX1);
+    }
+    else if (0x02 == (ADMUX & 0x07))
+    {
+        green = ADCH;
+        ADMUX = (ADMUX & 0xF8);
+    }
+    else if (0x00 == (ADMUX & 0x07))
+    {
+        blue = ADCH;
+        ADMUX = (ADMUX & 0xF8) | (1<<MUX0);
+    }
+    updateTimers(red, green, blue);
+}
+
 
 int main(void)
 {
