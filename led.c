@@ -27,6 +27,14 @@ Author: Erik Andersen
 
 static uint8_t red=156, green=234, blue=98;
 
+
+void updateTimers(uint8_t red, uint8_t green, uint8_t blue)
+{
+        OCR0A = red;
+        OCR0B = green;
+        OCR2A = blue;
+}
+
 ISR(TIMER2_COMPA_vect)
 {
     PORTD |= (1<<DDD2);
@@ -54,6 +62,27 @@ ISR(TIMER0_COMPB_vect)
 {
     // Turn off LED
     PORTD |= (1<<DDD1);
+}
+
+ISR(ADC_vect)
+{
+    if (0x00 == (ADMUX & 0x0F))
+    {
+        red = ADCH;
+        ADMUX = (ADMUX & 0xF8) | (1<<MUX0);
+    }
+    else if (0x01 == (ADMUX & 0x0F))
+    {
+        green = ADCH;
+        ADMUX = (ADMUX & 0xF8) | (1<<MUX1);
+        
+    }
+    else if (0x02 == (ADMUX & 0x0F))
+    {
+        blue = ADCH;
+        ADMUX = (ADMUX & 0xF8);
+    }
+    updateTimers(red, green, blue);
 }
 
 uint8_t getCharBits(uint8_t charVal)
@@ -157,13 +186,6 @@ void shiftInPattern(uint64_t pattern)
                 PORTB |= (1<<DDB3);
 }
 
-void updateTimers(uint8_t red, uint8_t green, uint8_t blue)
-{
-        OCR0A = red;
-        OCR0B = green;
-        OCR2A = blue;
-}
-
 int main(void)
 {
         // Seed random generator (random color mode)
@@ -193,6 +215,20 @@ int main(void)
         TIMSK2 |= ((1<<OCIE2A)|(1<<TOIE2));
         // 1024 Prescaler
         TCCR2B |= ((1<<CS22)|(1<<CS20));
+        
+        // Set up ADC
+        // REFS0 and REFS1 0 to use external Aref
+        // Start at a single ended input of 0, so ADMUX[0-3] = 0
+        ADMUX |= ((1<<ADLAR));
+        // Free run mode
+        ADCSRA |= ((1<<ADEN)|(1<<ADATE)|(1<<ADIE)|(1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2));
+        // ADTS[0-2] already 0, which is free running mode
+        // Disable digital input buffers
+        DIDR0 |= ((1<<ADC0D)|(1<<ADC1D)|(1<<ADC2D));
+        // Make sure the power is on to the ADC
+        PRR &= ~(1<<PRADC);
+        // Start a conversion
+        ADCSRA |= (1<<ADSC);
 
         uint64_t pattern = 0x00000000;
         uint8_t i = 0;
@@ -201,10 +237,9 @@ int main(void)
                 shiftInPattern(colorToPattern(red, green, blue));
                 _delay_ms(250);
                 // Pick a random color for now
-                red = rand()%256;
-                green = rand()%256;
-                blue = rand()%256;
-                updateTimers(red, green, blue);
+                //red = rand()%256;
+                //green = rand()%256;
+                //blue = rand()%256;
 	}
 	return 0;
 }
