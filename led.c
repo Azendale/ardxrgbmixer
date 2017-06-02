@@ -34,16 +34,16 @@ ISR(TIMER1_COMPA_vect)
 
 ISR(TIMER1_COMPB_vect)
 {
-    // Reset timer
-    TCNT1 = 0;
     // Turn on LED
     PORTD &= ~(1<<DDD2);
+    // Reset timer
+    TCNT1 = 0;
 }
 
 ISR(TIMER0_OVF_vect)
 {
     // Turn on LEDs
-    PORTD &= ~((1<<DDD0)|(1<<DDD2));
+    PORTD &= ~((1<<DDD0)|(1<<DDD1));
 }
 
 ISR(TIMER0_COMPA_vect)
@@ -158,7 +158,13 @@ void shiftInPattern(uint64_t pattern)
                 // Latch line high
                 PORTB |= (1<<DDB3);
 }
-    
+
+void updateTimers(uint8_t red, uint8_t green, uint8_t blue)
+{
+        OCR0A = red;
+        OCR0B = green;
+        OCR1A = blue;
+}
 
 int main(void)
 {
@@ -202,6 +208,7 @@ int main(void)
                 red = rand()%256;
                 green = rand()%256;
                 blue = rand()%256;
+                updateTimers(red, green, blue);
 	}
 	return 0;
 }
