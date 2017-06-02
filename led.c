@@ -177,11 +177,19 @@ int main(void)
         TCNT0 = 0;
         OCR0A = red;
         OCR0B = green;
+        // Enable interrupts for two compare matches and overflow
+        TIMSK0 |= ((1<<OCIE0B)|(1<<OCIE0A)|(1<<TOIE0));
+        // 1024 Prescaler
+        TCCR0B |= ((1<<CS02)|(1<<CS00));
 
         // Set up Timer1
         OCR1A = blue;
         // Set wrap for Timer1
         OCR1B = 256;
+        // Enable interrupts for two compare matches
+        TIMSK0 |= ((1<<OCIE1B)|(1<<OCIE1A));
+        // 1024 Prescaler
+        TCCR1B |= ((1<<CS12)|(1<<CS10));
         
         
         uint64_t pattern = 0x00000000;
