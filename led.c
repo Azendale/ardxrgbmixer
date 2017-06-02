@@ -27,17 +27,15 @@ Author: Erik Andersen
 
 static uint8_t red=156, green=234, blue=98;
 
-ISR(TIMER1_COMPA_vect)
+ISR(TIMER2_COMPA_vect)
 {
     PORTD |= (1<<DDD2);
 }
 
-ISR(TIMER1_COMPB_vect)
+ISR(TIMER2_OVF_vect)
 {
     // Turn on LED
     PORTD &= ~(1<<DDD2);
-    // Reset timer
-    TCNT1 = 0;
 }
 
 ISR(TIMER0_OVF_vect)
@@ -163,7 +161,7 @@ void updateTimers(uint8_t red, uint8_t green, uint8_t blue)
 {
         OCR0A = red;
         OCR0B = green;
-        OCR1A = blue;
+        OCR2A = blue;
 }
 
 int main(void)
@@ -188,16 +186,14 @@ int main(void)
         // 1024 Prescaler
         TCCR0B |= ((1<<CS02)|(1<<CS00));
 
-        // Set up Timer1
-        OCR1A = blue;
-        // Set wrap for Timer1
-        OCR1B = 256;
-        // Enable interrupts for two compare matches
-        TIMSK0 |= ((1<<OCIE1B)|(1<<OCIE1A));
+        // Set up Timer0
+        TCNT2 = 0;
+        OCR0A = blue;
+        // Enable interrupts for two compare matches and overflow
+        TIMSK2 |= ((1<<OCIE2A)|(1<<TOIE2));
         // 1024 Prescaler
-        TCCR1B |= ((1<<CS12)|(1<<CS10));
-        
-        
+        TCCR2B |= ((1<<CS22)|(1<<CS20));
+
         uint64_t pattern = 0x00000000;
         uint8_t i = 0;
 	while (1)
