@@ -3,6 +3,7 @@ Author: Erik Andersen
 */
 #include <avr/io.h>
 #include <util/delay.h>
+#include <avr/interrupt.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,6 +26,37 @@ Author: Erik Andersen
 #define MASK9 0x3F
 
 static uint8_t red=156, green=234, blue=98;
+
+ISR(TIMER1_COMPA_vect)
+{
+    PORTD |= (1<<DDD2);
+}
+
+ISR(TIMER1_COMPB_vect)
+{
+    // Reset timer
+    TCNT1 = 0;
+    // Turn on LED
+    PORTD &= ~(1<<DDD2);
+}
+
+ISR(TIMER0_OVF_vect)
+{
+    // Turn on LEDs
+    PORTD &= ~((1<<DDD0)|(1<<DDD2));
+}
+
+ISR(TIMER0_COMPA_vect)
+{
+    // Turn off LED
+    PORTD |= (1<<DDD0);
+}
+
+ISR(TIMER0_COMPB_vect)
+{
+    // Turn off LED
+    PORTD |= (1<<DDD1);
+}
 
 uint8_t getCharBits(uint8_t charVal)
 {
@@ -130,23 +162,21 @@ void shiftInPattern(uint64_t pattern)
 
 int main(void)
 {
+        // Seed random generator (random color mode)
         srand(0);
+
+        // Set up shift register control pins
         DDRB |= ((1<<DDB5)|(1<<DDB4)|(1<<DDB3));
+        // Set up RGB PWM pins
+        DDRD |= ((1<<DDD0)|(1<<DDD1)|(1<<DDD2));
         
         uint64_t pattern = 0x00000000;
         uint8_t i = 0;
 	while (1)
 	{
-                //pattern = (pattern<<6);
-                //pattern |= getCharBits(rand()%10);
-                //pattern = (pattern<<1);
                 shiftInPattern(colorToPattern(red, green, blue));
                 _delay_ms(250);
-                //++i;
-                //if (i>9)
-                //{
-                //    i=0;
-                //}
+                // Pick a random color for now
                 red = rand()%256;
                 green = rand()%256;
                 blue = rand()%256;
