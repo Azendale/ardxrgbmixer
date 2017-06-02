@@ -235,7 +235,7 @@ int main(void)
 	while (1)
 	{
                 shiftInPattern(colorToPattern(red, green, blue));
-                _delay_ms(250);
+                _delay_ms(5);
                 // Pick a random color for now
                 //red = rand()%256;
                 //green = rand()%256;
