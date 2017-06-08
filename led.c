@@ -30,9 +30,24 @@ static uint8_t red=156, green=234, blue=98;
 
 void updateTimers(uint8_t red, uint8_t green, uint8_t blue)
 {
-        OCR0A = red;
-        OCR0B = green;
-        OCR2A = blue;
+// If the new value is less than the timer, the timer will never go off.
+// If the new value is 0, the light may get stuck on, leading to flickering
+// around 0
+if (TCNT0 >= red)
+{
+    PORTD |= (1<<DDD0);
+}    
+if (TCNT0 >= green)
+{
+    PORTD |= (1<<DDD1);
+}
+if (TCNT2 >= blue)
+{
+    PORTD |= (1<<DDD2);
+}
+OCR0A = red;
+OCR0B = green;
+OCR2A = blue;
 }
 
 ISR(TIMER2_COMPA_vect)
