@@ -1,5 +1,12 @@
 /*
 Author: Erik Andersen
+
+Input:
+  3 Analog inputs (potentiometers) on analog pins A0-A2. Requires a
+  reference on the Aref pin.
+    A0: Red input
+    A1: Green input
+    A2: Blue input
 */
 #include <avr/io.h>
 #include <util/delay.h>
@@ -8,12 +15,19 @@ Author: Erik Andersen
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ON 1
-#define OUT 1
-#define IN 0
-#define OFF 0
-
+// Note: These patterns are for a 7-segment wiring that is *not* standard.
+// This was to make wiring the 7-segments on a breadboard next to shift
+// registers much easier.
+// The 7 segments were connected in the following order (numbers from LSB):
+//   2222  
+// 33    11
+// 33    11
+//   4444  
+// 66    00
+// 66    00
+//   5555  
 #define PATMASK 0x7F
+// Numbers
 #define MASK0 0x6F
 #define MASK1 0x03
 #define MASK2 0x76
@@ -24,40 +38,52 @@ Author: Erik Andersen
 #define MASK7 0x07
 #define MASK8 0x7F
 #define MASK9 0x3F
+// HEX letters
+#define MASKA 0x5F
+#define MASKB 0x79
+#define MASKC 0x70
+#define MASKD 0x73
+#define MASKE 0x7C
+#define MASKF 0x5C
 
-static uint8_t red=156, green=234, blue=98;
+
+
+static uint8_t red=4, green=0, blue=11;
 
 
 void updateTimers(uint8_t red, uint8_t green, uint8_t blue)
 {
-// If the new value is less than the timer, the timer will never go off.
-// If the new value is 0, the light may get stuck on, leading to flickering
-// around 0
-if (TCNT0 >= red)
-{
-    PORTD |= (1<<DDD0);
-}    
-if (TCNT0 >= green)
-{
-    PORTD |= (1<<DDD1);
-}
-if (TCNT2 >= blue)
-{
-    PORTD |= (1<<DDD2);
-}
-OCR0A = red;
-OCR0B = green;
-OCR2A = blue;
+    // If the new value is less than the timer, the timer will never go off.
+    // If the new value is 0, the light may get stuck on, leading to flickering
+    // around ADC values of 0
+    if (TCNT0 >= red)
+    {
+        PORTD |= (1<<DDD0);
+    }
+    if (TCNT0 >= green)
+    {
+        PORTD |= (1<<DDD1);
+    }
+    if (TCNT2 >= blue)
+    {
+        PORTD |= (1<<DDD2);
+    }
+    // Update compares
+    OCR0A = red;
+    OCR0B = green;
+    OCR2A = blue;
 }
 
 ISR(TIMER2_COMPA_vect)
 {
+    // End of cycle, set the bit for blue high to turn blue off
     PORTD |= (1<<DDD2);
 }
 
 ISR(TIMER2_OVF_vect)
 {
-    // Turn on LED
+    // Turn on blue LED
+    // Only turn on the LED if we are running a cycle of more than 0
     if (blue>0)
     {
         PORTD &= ~(1<<DDD2);
@@ -66,26 +92,26 @@ ISR(TIMER2_OVF_vect)
 
 ISR(TIMER0_OVF_vect)
 {
-    // Turn on LEDs
+    // Turn on LEDs if we are doing a cycle more than 0
     if (red>0)
     {
-                PORTD &= ~(1<<DDD0);
+        PORTD &= ~(1<<DDD0);
     }
     if (green>0)
     {
-                PORTD &= ~(1<<DDD1);
+        PORTD &= ~(1<<DDD1);
     }
 }
 
 ISR(TIMER0_COMPA_vect)
 {
-    // Turn off LED
+    // Turn off red LED
     PORTD |= (1<<DDD0);
 }
 
 ISR(TIMER0_COMPB_vect)
 {
-    // Turn off LED
+    // Turn off green LED
     PORTD |= (1<<DDD1);
 }
 
@@ -131,7 +157,7 @@ uint8_t getCharBits(uint8_t charVal)
     {
         return MASK9;
     }
-    return 0x7C;
+    return 0x7C; // Do an E for Error
 }
 
 uint32_t byteToDecPattern(uint8_t bite)
@@ -257,14 +283,14 @@ int main(void)
 
         uint64_t pattern = 0x00000000;
         uint8_t i = 0;
-	while (1)
-	{
+    while (1)
+    {
                 shiftInPattern(colorToPattern(red, green, blue));
                 _delay_ms(5);
                 // Pick a random color for now
                 //red = rand()%256;
                 //green = rand()%256;
                 //blue = rand()%256;
-	}
-	return 0;
+    }
+    return 0;
 }
