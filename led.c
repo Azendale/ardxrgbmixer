@@ -125,10 +125,40 @@ Output:
 #define HEX 0
 #define DEC 1
 
+// States for auto fade
+#define REDFADEDOWN 0
+#define REDFADEUP 1
+#define GREENFADEDOWN 2
+#define GREENFADEUP 3
+#define BLUEFADEDOWN 4
+#define BLUEFADEUP 5
+#define REDGREENTRANSITION 6
+#define GREENBLUETRANSITION 7
+#define BLUEREDTRANSITION 8
+
 // Global values because we need to update the displays in main, but set them
 // in the ADC read interrupt
 static uint8_t red=4, green=0, blue=11;
 static uint8_t g_displayFormat=DEC;
+// When in fade mode, the highest value any one color can get
+static uint8_t g_autoCycleMaxValue=255;
+// When in fade mode, the amount, when we are on a pure color, that we fade
+// down toward 0
+static uint8_t g_autoCyclePureFadeDown=0;
+// When in fade mode, delay between steps = this*some constant 
+static uint8_t g_autoCycleMult=1;
+
+/********************************************************************************
+Purpose: Generate the next RGB color in the fade
+Precondition: None
+Postcondition: Returns next fade color in the sequence in the 24 LSB
+********************************************************************************/
+static uint32_t fadeNextStep(void)
+{
+    static uint8_t fadeState=REDGREENTRANSITION;
+    static uint8_t subStepFadeStep=0;
+    return 0x00000000; // For now
+}
 
 /********************************************************************************
 Purpose: Update the compare values for the timers (to control PWM)
