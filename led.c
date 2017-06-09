@@ -169,122 +169,116 @@ static uint32_t fadeNextStep(void)
     uint8_t red, green, blue;
     if (REDFADEDOWN == fadeState)
     {
+        ++subStepFadeStep;
+        red = g_autoCycleMaxValue-subStepFadeStep;
         if (subStepFadeStep >= g_autoCyclePureFadeDown)
         {
             subStepFadeStep = 0;
             fadeState = REDFADEUP;
         }
-        else
-        {
-            ++subStepFadeStep;
-            red = g_autoCycleMaxValue-subStepFadeStep;
-        }
     }
     else if (GREENFADEDOWN == fadeState)
     {
-        if (subStepFadeStep >=  g_autoCyclePureFadeDown)
+        ++subStepFadeStep;
+        green = g_autoCycleMaxValue-subStepFadeStep;
+        if (subStepFadeStep >= g_autoCyclePureFadeDown)
         {
             subStepFadeStep = 0;
             fadeState = GREENFADEUP;
         }
-        else
-        {
-            ++subStepFadeStep;
-            green = g_autoCycleMaxValue-subStepFadeStep;
-        }
     }
     else if (BLUEFADEDOWN == fadeState)
     {
-        if (subStepFadeStep >=  g_autoCyclePureFadeDown)
+        ++subStepFadeStep;
+        blue = g_autoCycleMaxValue-subStepFadeStep;
+        if (subStepFadeStep >= g_autoCyclePureFadeDown)
         {
             subStepFadeStep = 0;
             fadeState = BLUEFADEUP;
         }
-        else
-        {
-            ++subStepFadeStep;
-            blue = g_autoCycleMaxValue-subStepFadeStep;
-        }
     }
     else if (REDFADEUP == fadeState)
     {
+        ++subStepFadeStep;
+        red = g_autoCycleMaxValue - g_autoCyclePureFadeDown + subStepFadeStep;
         if (subStepFadeStep >= g_autoCyclePureFadeDown)
         {
             subStepFadeStep = 0;
             fadeState = REDGREENTRANSITION;
         }
-        else
-        {
-            ++subStepFadeStep;
-            red = g_autoCycleMaxValue - g_autoCyclePureFadeDown + subStepFadeStep;
-        }
     }
     else if (GREENFADEUP == fadeState)
     {
+        ++subStepFadeStep;
+        green = g_autoCycleMaxValue - g_autoCyclePureFadeDown + subStepFadeStep;
         if (subStepFadeStep >= g_autoCyclePureFadeDown)
         {
             subStepFadeStep = 0;
             fadeState = GREENBLUETRANSITION;
         }
-        else
-        {
-            ++subStepFadeStep;
-            green = g_autoCycleMaxValue - g_autoCyclePureFadeDown + subStepFadeStep;
-        }
     }
     else if (BLUEFADEUP == fadeState)
     {
+        ++subStepFadeStep;
+        blue = g_autoCycleMaxValue - g_autoCyclePureFadeDown + subStepFadeStep;
         if (subStepFadeStep >= g_autoCyclePureFadeDown)
         {
             subStepFadeStep = 0;
             fadeState = BLUEREDTRANSITION;
         }
-        else
-        {
-            ++subStepFadeStep;
-            blue = g_autoCycleMaxValue - g_autoCyclePureFadeDown + subStepFadeStep;
-        }
     }
     else if (REDGREENTRANSITION == fadeState)
     {
+        ++subStepFadeStep;
+        red = g_autoCycleMaxValue-subStepFadeStep;
+        green = subStepFadeStep;
         if (subStepFadeStep >= g_autoCycleMaxValue)
         {
             subStepFadeStep = 0;
-            fadeState = GREENFADEDOWN;
-        }
-        else
-        {
-            ++subStepFadeStep;
-            red = g_autoCycleMaxValue-subStepFadeStep;
-            green = subStepFadeStep;
+            if (g_autoCyclePureFadeDown > 0)
+            {
+                fadeState = GREENFADEDOWN;
+            }
+            else
+            {
+                fadeState = GREENBLUETRANSITION;
+            }
         }
     }
     else if (GREENBLUETRANSITION == fadeState)
     {
+        ++subStepFadeStep;
+        green = g_autoCycleMaxValue-subStepFadeStep;
+        blue = subStepFadeStep;
         if (subStepFadeStep >= g_autoCycleMaxValue)
         {
             subStepFadeStep = 0;
-            fadeState = BLUEFADEDOWN;
-        }
-        else
-        {
-            ++subStepFadeStep;
-            green = g_autoCycleMaxValue-subStepFadeStep;
-            blue = subStepFadeStep;
+            if (g_autoCyclePureFadeDown > 0)
+            {
+                fadeState = BLUEFADEDOWN;
+            }
+            else
+            {
+                fadeState = BLUEREDTRANSITION;
+            }
         }
     }
     else if (BLUEREDTRANSITION == fadeState)
     {
+        ++subStepFadeStep;
+        blue = g_autoCycleMaxValue-subStepFadeStep;
+        red = subStepFadeStep;
         if (subStepFadeStep >= g_autoCycleMaxValue)
         {
             subStepFadeStep = 0;
-            fadeState = REDFADEDOWN;
-        }
-        else
-        {
-            ++subStepFadeStep;
-            blue = g_autoCycleMaxValue-subStepFadeStep;
-            red = subStepFadeStep;
+            if (g_autoCyclePureFadeDown > 0)
+            {
+                fadeState = REDFADEDOWN;
+            }
+            else
+            {
+                fadeState = REDGREENTRANSITION;
+            }
         }
     }
     uint32_t returnValue = 0;
