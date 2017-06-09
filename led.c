@@ -150,14 +150,142 @@ static uint8_t g_autoCycleMult=1;
 
 /********************************************************************************
 Purpose: Generate the next RGB color in the fade
-Precondition: None
+Precondition: g_autoCyclePureFadeDown < g_autoCycleMaxValue
 Postcondition: Returns next fade color in the sequence in the 24 LSB
 ********************************************************************************/
 static uint32_t fadeNextStep(void)
 {
     static uint8_t fadeState=REDGREENTRANSITION;
     static uint8_t subStepFadeStep=0;
-    return 0x00000000; // For now
+    uint8_t red, green, blue;
+    if (REDFADEDOWN == fadeState)
+    {
+        if (subStepFadeStep >= g_autoCyclePureFadeDown)
+        {
+            subStepFadeStep = 0;
+            fadeState = REDFADEUP;
+        }
+        else
+        {
+            ++subStepFadeStep;
+            red = g_autoCycleMaxValue-subStepFadeStep;
+        }
+    }
+    else if (GREENFADEDOWN == fadeState)
+    {
+        if (subStepFadeStep >=  g_autoCyclePureFadeDown)
+        {
+            subStepFadeStep = 0;
+            fadeState = GREENFADEUP;
+        }
+        else
+        {
+            ++subStepFadeStep;
+            green = g_autoCycleMaxValue-subStepFadeStep;
+        }
+    }
+    else if (BLUEFADEDOWN == fadeState)
+    {
+        if (subStepFadeStep >=  g_autoCyclePureFadeDown)
+        {
+            subStepFadeStep = 0;
+            fadeState = BLUEFADEUP;
+        }
+        else
+        {
+            ++subStepFadeStep;
+            blue = g_autoCycleMaxValue-subStepFadeStep;
+        }
+    }
+    else if (REDFADEUP == fadeState)
+    {
+        if (subStepFadeStep >= g_autoCyclePureFadeDown)
+        {
+            subStepFadeStep = 0;
+            fadeState = REDGREENTRANSITION;
+        }
+        else
+        {
+            ++subStepFadeStep;
+            red = g_autoCycleMaxValue - g_autoCyclePureFadeDown + subStepFadeStep;
+        }
+    }
+    else if (GREENFADEUP == fadeState)
+    {
+        if (subStepFadeStep >= g_autoCyclePureFadeDown)
+        {
+            subStepFadeStep = 0;
+            fadeState = GREENBLUETRANSITION;
+        }
+        else
+        {
+            ++subStepFadeStep;
+            green = g_autoCycleMaxValue - g_autoCyclePureFadeDown + subStepFadeStep;
+        }
+    }
+    else if (BLUEFADEUP == fadeState)
+    {
+        if (subStepFadeStep >= g_autoCyclePureFadeDown)
+        {
+            subStepFadeStep = 0;
+            fadeState = BLUEREDTRANSITION;
+        }
+        else
+        {
+            ++subStepFadeStep;
+            blue = g_autoCycleMaxValue - g_autoCyclePureFadeDown + subStepFadeStep;
+        }
+    }
+    else if (REDGREENTRANSITION == fadeState)
+    {
+        if (subStepFadeStep >= g_autoCycleMaxValue)
+        {
+            subStepFadeStep = 0;
+            fadeState = GREENFADEDOWN;
+        }
+        else
+        {
+            ++subStepFadeStep;
+            red = g_autoCycleMaxValue-subStepFadeStep;
+            green = subStepFadeStep;
+        }
+    }
+    else if (GREENBLUETRANSITION == fadeState)
+    {
+        if (subStepFadeStep >= g_autoCycleMaxValue)
+        {
+            subStepFadeStep = 0;
+            fadeState = BLUEFADEDOWN;
+        }
+        else
+        {
+            ++subStepFadeStep;
+            green = g_autoCycleMaxValue-subStepFadeStep;
+            blue = subStepFadeStep;
+        }
+    }
+    else if (BLUEREDTRANSITION == fadeState)
+    {
+        if (subStepFadeStep >= g_autoCycleMaxValue)
+        {
+            subStepFadeStep = 0;
+            fadeState = REDFADEDOWN;
+        }
+        else
+        {
+            ++subStepFadeStep;
+            blue = g_autoCycleMaxValue-subStepFadeStep;
+            red = subStepFadeStep;
+        }
+    }
+    uint32_t returnValue = 0;
+    returnValue |= red;
+    returnValue <<= 8;
+    returnValue |= green;
+    returnValue <<= 8;
+    returnValue |= blue;
+    returnValue <<= 8;
+    return returnValue;
 }
 
 /********************************************************************************
