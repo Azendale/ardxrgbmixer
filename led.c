@@ -1,5 +1,10 @@
 /*
-Author: Erik Andersen
+Author: Erik Andersen <erik.b.andersen@gmail.com>
+Changed: 2017-06-08 (added lots of comments)
+Created: I honestly don't remember. :)
+
+Purpose: Implement a RGB color mixer that uses potentiometers to individually
+  select the values for the red, green, and blue channels.
 
 Hardware:
  9 TIL729 7-segment displays. Common Anode
@@ -9,6 +14,36 @@ Hardware:
  66 680 Ohm resistors (3 for each RGB channel, 63 for each 7-segment
     display segment)
  Tons of wires and big breadboard!
+
+Wiring:
+ (I probably forgot something here)
+ Aref pin should be connected to 5v
+ Each potentiometer should have one end connected to 5v & the other to Gnd.
+ Middle pin of potentiometer should go to corresponding A0-A2 pin (see inputs
+ section).
+ Each segment of the 7 segment display (other than decimal segment/pin) should
+ be connected to a resistor (680 ohm) and that resistor should be connected to
+ the corresponding output pin on the shift register. See note by the defines
+ for digits to see what order the segments are connected in.
+ The common anode of the 7-segment displays should be connected to 5v.
+ The QH' output (pin 9) of a shift register should chain to the SER (pin 14) on
+ the next register.
+ The SER (pin 14) of the most significant shift register should be connected 
+ to the ardiuno digital output pin 13.
+ Obviously, the power and ground of the shift register should be connected. :)
+ The !OE (pin 13) of the shift registers should be grounded.
+ The RCLK (pin 12) of the shift registers should be connected together and to
+ the ardiuno digital output pin 11.
+ The SRCLK (pin 11) of the shift registers should be connected together and to
+ the ardiuno digital output pin 12.
+ The !SRCLR (pin 10) of each shift register should be connected to 5v.
+ 5v should be connected to the common anode of the RGB LED.
+ The red cathode should be connected to a resistor and that resistor should be
+ connected to ardiuno digital pin 0.
+ The green cathode should be connected to a resistor and that resistor should be
+ connected to ardiuno digital pin 1.
+ The blue cathode should be connected to a resistor and that resistor should be
+ connected to ardiuno digital pin 2.
 
 Input:
   3 Analog inputs (potentiometers) on analog pins A0-A2. Requires a
@@ -71,6 +106,9 @@ Output:
 #define REDMASK (1<<DDD0)
 #define GREENMASK (1<<DDD1)
 #define BLUEMASK (1<<DDD2)
+#define SERDATAMASK (1<<DDB5)
+#define SRCLKMASK (1<<DDB4)
+#define REFRESHMASK (1<<DDB3)
 
 // Global values because we need to update the displays in main, but set them
 // in the ADC read interrupt
@@ -275,6 +313,7 @@ void shiftInPattern(uint64_t pattern)
 
 ISR(ADC_vect)
 {
+    // Figure out what we were reading by what admux is set to
     if (0x01 == (ADMUX & 0x07))
     {
         red = ADCH;
@@ -297,9 +336,9 @@ ISR(ADC_vect)
 int main(void)
 {
     // Set up shift register control pins
-    DDRB |= ((1<<DDB5)|(1<<DDB4)|(1<<DDB3));
+    DDRB |= (SERDATAMASK|SRCLKMASK|REFRESHMASK);
     // Set up RGB PWM pins
-    DDRD |= ((1<<DDD0)|(1<<DDD1)|(1<<DDD2));
+    DDRD |= (REDMASK|GREENMASK|BLUEMASK);
     
     // Turn on interrupts
     sei();
