@@ -1,11 +1,13 @@
 /*
 Author: Erik Andersen <erik.b.andersen@gmail.com>
-Changed: 2017-06-08 (added lots of comments)
+Changed: 2017-06-09 (added auto fade mode)
 Created: I honestly don't remember. :)
 License: GPLv3
 
 Purpose: Implement a RGB color mixer that uses potentiometers to individually
-  select the values for the red, green, and blue channels.
+  select the values for the red, green, and blue channels. (In direct mode).
+ Implement a RGB fader that allows you to control speed, maximum brightness,
+ and fading down of pure colors.
 
 Hardware:
  9 TIL729 7-segment displays. Common Anode
@@ -54,9 +56,16 @@ Wiring:
 Input:
   3 Analog inputs (potentiometers) on analog pins A0-A2. Requires a
   reference on the Aref pin.
-    A0: Red input
-    A1: Green input
-    A2: Blue input
+    Direct mode:
+      A0: Red input
+      A1: Green input
+      A2: Blue input
+    Fader mode:
+      A0: Fade step delay
+      A1: Fade down: how much to fade a pure R, G, or B value toward 0.
+      A2: Max value for R, G, or B channel (lower limit 3).
+    Button 1: Toggle fader/mixer mode.
+    Button 0: Toggle Hex/Decimial display.
 
 Output:
   Digital pins 0-2 and 11-13.
