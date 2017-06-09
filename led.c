@@ -290,25 +290,25 @@ void shiftInPattern(uint64_t pattern)
     for (; i<64; ++i)
     {
         // Set shift line low
-        PORTB &= ~(1<<DDB4);
+        PORTB &= ~SRCLKMASK;
         // If the last bit in the pattern is 1
         if ((pattern>>i)&(0x00000001))
         {
             // Set the data line low (remember we are active low)
-            PORTB &= ~(1<<DDB5);
+            PORTB &= ~SERDATAMASK;
         }
         else
         {
             // Set the data line high
-            PORTB |= (1<<DDB5);
+            PORTB |= SERDATAMASK;
         }
         // Set shift line High
-        PORTB |= (1<<DDB4);
+        PORTB |= SRCLKMASK;
     }
     // Set display refresh line low
-    PORTB &= ~(1<<DDB3);
+    PORTB &= ~REFRESHMASK;
     // Set display refresh line high
-    PORTB |= (1<<DDB3);
+    PORTB |= REFRESHMASK;
 }
 
 ISR(ADC_vect)
