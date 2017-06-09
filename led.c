@@ -163,16 +163,6 @@ Postcondition: If new button stable button state, update display output format.
 ********************************************************************************/
 static inline void debounce (void)
 {
-    //printf(".\n");
-    if (0 == (~PINB & BUTTONS_MASK))
-    {
-        g_displayFormat = DEC;
-    }
-    else
-    {
-        g_displayFormat = HEX;
-    }
-    /*
     // Track how long button 0 has been in this state
     static uint8_t button0Count = 0;
     // Track how long button 1 has been in this state
@@ -238,7 +228,6 @@ static inline void debounce (void)
         // changed states
         button1Count = 0;
     }
-    */
 }
 
 /********************************************************************************
@@ -544,22 +533,6 @@ Postcondition: None (does not exit)
 ********************************************************************************/
 int main(void)
 {
-    // HiJack stdin
-    // Create File Pointers for in and out
-    /*
-    FILE uart_output = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
-    FILE uart_input = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
-
-    // Initialize the UART Driver
-    uart_init();
-
-    // Hijack STDIN/STDOUT and send then to the UART Driver
-    stdout = &uart_output;
-    stdin  = &uart_input;
-    */
-
-
-    
     // Set up shift register control pins
     DDRB |= (SERDATAMASK|SRCLKMASK|REFRESHMASK);
     // Set up RGB PWM pins
