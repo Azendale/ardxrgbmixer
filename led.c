@@ -117,7 +117,12 @@ Output:
 // in the ADC read interrupt
 static uint8_t red=4, green=0, blue=11;
 
-
+/********************************************************************************
+Purpose: Update the compare values for the timers (to control PWM)
+Precondition: None
+Postcondition: Timer compare registers updated. RGB LED channels sometimes
+ changed.
+********************************************************************************/
 void updateTimers(uint8_t red, uint8_t green, uint8_t blue)
 {
     // If the new value is less than the timer, the timer will never go off.
@@ -142,12 +147,22 @@ void updateTimers(uint8_t red, uint8_t green, uint8_t blue)
     OCR2A = blue;
 }
 
+/********************************************************************************
+Purpose:Handle the end of the PWM cyle for blue channel.
+Precondition: None
+Postcondition: Blue channel turned off.
+********************************************************************************/
 ISR(TIMER2_COMPA_vect)
 {
     // End of cycle, set the bit for blue high to turn blue off
     PORTD |= BLUEMASK;
 }
 
+/********************************************************************************
+Purpose: Handle the overflow of the blue PWM timer.
+Precondition: None
+Postcondition: Blue channel on if blue value > 0
+********************************************************************************/
 ISR(TIMER2_OVF_vect)
 {
     // Turn on blue LED
@@ -158,6 +173,12 @@ ISR(TIMER2_OVF_vect)
     }
 }
 
+/********************************************************************************
+Purpose: Handle overflow of the Red & Green PWM timer.
+Precondition: None
+Postcondition: Red channel turned on if red > 0. Green channnel turned on if
+ green > 0.
+********************************************************************************/
 ISR(TIMER0_OVF_vect)
 {
     // Turn on LEDs if we are doing a cycle more than 0
@@ -171,18 +192,34 @@ ISR(TIMER0_OVF_vect)
     }
 }
 
+/********************************************************************************
+Purpose: Handle end of red PWM cycle
+Precondition: None
+Postcondition: Red channel turned off.
+********************************************************************************/
 ISR(TIMER0_COMPA_vect)
 {
     // Turn off red LED
     PORTD |= REDMASK;
 }
 
+/********************************************************************************
+Purpose: Handel end of green PWM cycle
+Precondition: None
+Postcondition: Green chennel turned off.
+********************************************************************************/
 ISR(TIMER0_COMPB_vect)
 {
     // Turn off green LED
     PORTD |= GREENMASK;
 }
 
+/********************************************************************************
+Purpose: Convert a the value for a digit of a number to the corresponding 7
+ segment display bits.
+Precondition: 0 <= charVal <= 15
+Postcondition: Returns 7-segment bits for character
+********************************************************************************/
 uint8_t getCharBits(uint8_t charVal)
 {
     if (0 == charVal)
@@ -255,6 +292,12 @@ uint8_t getCharBits(uint8_t charVal)
     }
 }
 
+/********************************************************************************
+Purpose: Break a byte down into decimal representation and return the 7-segment
+ display pattern to represent it.
+Precondition: None
+Postcondition: Returns the pattern at the LSB end of the 32 bits.
+********************************************************************************/
 uint32_t byteToDecPattern(uint8_t bite)
 {
     uint8_t hundreds, tens, ones;
@@ -275,6 +318,11 @@ uint32_t byteToDecPattern(uint8_t bite)
     return pattern;
 }
 
+/********************************************************************************
+Purpose: Convert a byte into 7-segment display pattern for it's hex value.
+Precondition: None
+Postcondition:Returns the pattern in the LSB end of the 32 bits.
+********************************************************************************/
 uint32_t byteToHexPattern(uint8_t bite)
 {
     uint32_t pattern = 0;
@@ -288,6 +336,11 @@ uint32_t byteToHexPattern(uint8_t bite)
     return pattern;
 }
 
+/********************************************************************************
+Purpose: Convert a color to the 7-segment display pattern
+Precondition: None
+Postcondition: Pattern returned in the MSB end of the 64 bits
+********************************************************************************/
 uint64_t colorToPattern(uint8_t red, uint8_t green, uint8_t blue)
 {
     uint64_t pattern = 0;
@@ -311,6 +364,11 @@ uint64_t colorToPattern(uint8_t red, uint8_t green, uint8_t blue)
     return pattern;
 }
 
+/********************************************************************************
+Purpose: Shift a 7-segment display pattern into the shift registers
+Precondition: None
+Postcondition: Registers updated and displaying new pattern.
+********************************************************************************/
 void shiftInPattern(uint64_t pattern)
 {
     uint8_t i = 0; 
@@ -338,28 +396,47 @@ void shiftInPattern(uint64_t pattern)
     PORTB |= REFRESHMASK;
 }
 
+/********************************************************************************
+Purpose: Read the ADC value and update PWM values, rotate to next ADC channel
+Precondition:ADC ready to be read
+Postcondition: red, green, or blue global variables updated; PWM timers updated,
+ ADC switched to next channel.
+********************************************************************************/
 ISR(ADC_vect)
 {
     // Figure out what we were reading by what admux is set to
+    // Mask as bits except the source selection bits
     if (0x01 == (ADMUX & 0x07))
     {
         red = ADCH;
+        // Mask out the current source selection bits, and then OR in the
+        // correct ones
         ADMUX = (ADMUX & 0xF8) | (1<<MUX1);
     }
     else if (0x02 == (ADMUX & 0x07))
     {
         green = ADCH;
+        // Mask out the current source selection bits to set to 0
         ADMUX = (ADMUX & 0xF8);
     }
     else if (0x00 == (ADMUX & 0x07))
     {
         blue = ADCH;
+        // Mask out the current source selection bits, and then OR in the
+        // correct ones
         ADMUX = (ADMUX & 0xF8) | (1<<MUX0);
     }
+    // Update the PWM timers
     updateTimers(red, green, blue);
 }
 
 
+/********************************************************************************
+Purpose: Set up board to do RGB PWM while reading values from 3 input
+ potentiometers; update 7-segment displays.
+Precondition: None
+Postcondition: None (does not exit)
+********************************************************************************/
 int main(void)
 {
     // Set up shift register control pins
@@ -410,5 +487,6 @@ int main(void)
         shiftInPattern(colorToPattern(red, green, blue));
         _delay_ms(5);
     }
+    // Should never reach here
     return 0;
 }
