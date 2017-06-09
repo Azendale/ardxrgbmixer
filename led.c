@@ -129,7 +129,10 @@ Output:
 #define DIRECTMODE 0
 #define FADEMODE 1
 
-#define FADEMULT 10000
+// Min time a auto fade step should take, in 10's of ms
+#define FADEMIN 1
+// Max
+#define FADEMAX 100
 
 // States for auto fade
 #define REDFADEDOWN 0
@@ -154,7 +157,7 @@ static uint8_t g_autoCycleMaxValue=10;
 // down toward 0
 static uint8_t g_autoCyclePureFadeDown=3;
 // When in fade mode, delay between steps = this*some constant 
-static uint8_t g_autoCycleMult=100;
+static uint16_t g_autoCycleMult=100;
 // Fade mode or direct mixer mode
 static uint8_t g_mode=DIRECTMODE;
 
@@ -786,8 +789,9 @@ int main(void)
         }
         else
         {
+            // Used for scaling math that seems to need wide types or floating
+            // point
             float scaler = 0;
-            g_autoCycleMult = g_adc1;
             if (g_adc3 > 2)
             {
                 g_autoCycleMaxValue = g_adc3;
@@ -800,16 +804,20 @@ int main(void)
             scaler /=255;
             scaler *= g_autoCycleMaxValue;
             g_autoCyclePureFadeDown = scaler;
+
+            scaler = g_adc1/255;
+            scaler = (FADEMAX-FADEMIN)*scaler + FADEMIN;
+            g_autoCycleMult = scaler;
             uint32_t colors = fadeNextStep();
             red = colors>>16;
             green = (colors>>8)&0x000000FF;
             blue = colors&0x000000FF;
             //updateTimers(red, green, blue); // Timers now update themselves on reset
             shiftInPattern(colorToPattern(red, green, blue));
-            uint8_t fadePause = 0;
+            uint16_t fadePause = 0;
             for (fadePause=0; fadePause < g_autoCycleMult; ++fadePause)
             {
-                _delay_us(FADEMULT);
+                _delay_ms(10);
             }
         }
     }
