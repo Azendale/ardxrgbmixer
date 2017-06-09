@@ -774,8 +774,20 @@ int main(void)
 
     while (1)
     {
-        shiftInPattern(colorToPattern(red, green, blue));
-        _delay_ms(5);
+        if (DIRECTMODE == g_mode)
+        {
+            shiftInPattern(colorToPattern(red, green, blue));
+            _delay_ms(5);
+        }
+        else
+        {
+            uint32_t colors = fadeNextStep();
+            red = colors>>16;
+            green = (colors>>8)&0x000000FF;
+            blue = colors&0x000000FF;
+            shiftInPattern(colorToPattern(red, green, blue));
+            _delay_us(2500*g_autoCycleMult);
+        }
     }
     // Should never reach here
     return 0;
