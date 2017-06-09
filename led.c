@@ -705,7 +705,7 @@ ISR(ADC_vect)
         ADMUX = (ADMUX & 0xF8) | (1<<MUX0);
     }
     // Update the PWM timers
-    updateTimers(red, green, blue);
+    //updateTimers(red, green, blue); // Timers now update themselves on reset
 }
 
 
@@ -793,7 +793,7 @@ int main(void)
             red = colors>>16;
             green = (colors>>8)&0x000000FF;
             blue = colors&0x000000FF;
-            updateTimers(red, green, blue);
+            //updateTimers(red, green, blue); // Timers now update themselves on reset
             shiftInPattern(colorToPattern(red, green, blue));
             uint8_t fadePause = 0;
             for (fadePause=0; fadePause < g_autoCycleMult; ++fadePause)
