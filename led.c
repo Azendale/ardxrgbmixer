@@ -786,9 +786,20 @@ int main(void)
         }
         else
         {
+            float scaler = 0;
             g_autoCycleMult = g_adc1;
-            g_autoCyclePureFadeDown = g_adc2;
-            g_autoCycleMaxValue = g_adc3;
+            if (g_adc3 > 2)
+            {
+                g_autoCycleMaxValue = g_adc3;
+            }
+            else
+            {
+                g_autoCycleMaxValue = 3;
+            }
+            scaler = g_adc2;
+            scaler /=255;
+            scaler *= g_autoCycleMaxValue;
+            g_autoCyclePureFadeDown = scaler;
             uint32_t colors = fadeNextStep();
             red = colors>>16;
             green = (colors>>8)&0x000000FF;
