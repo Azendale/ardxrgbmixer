@@ -574,7 +574,7 @@ int main(void)
 
     // Set up Timer1 to do button debounce
     // Prescale of 1024
-    TCCR1B |= ((1<<CS11) |(1 << CS10));
+    TCCR1B |= ((1<<CS11));
     OCR1A = 156;
     TIMSK1 |= (1 << OCIE1A);
     TCNT1 = 0;
