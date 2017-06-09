@@ -106,9 +106,14 @@ Output:
 #define REDMASK (1<<DDD0)
 #define GREENMASK (1<<DDD1)
 #define BLUEMASK (1<<DDD2)
+
 #define SERDATAMASK (1<<DDB5)
 #define SRCLKMASK (1<<DDB4)
 #define REFRESHMASK (1<<DDB3)
+
+#define BUTTON0_MASK (1<<DDB1)
+#define BUTTON1_MASK (1<<DDB2)
+#define BUTTONS_MASK (BUTTON0_MASK|BUTTON1_MASK)
 
 // 0 if you want decimal output, 1 if you want hex
 #define HEXOUTPUT 0
@@ -145,6 +150,82 @@ void updateTimers(uint8_t red, uint8_t green, uint8_t blue)
     OCR0A = red;
     OCR0B = green;
     OCR2A = blue;
+}
+
+/********************************************************************************
+Purpose: Check to see if either of the buttons have stabilized in a new state.
+Precondition: None
+Postcondition: If new button stable button state, update display output format.
+********************************************************************************/
+static inline void debounce (void)
+{
+    // Track how long button 0 has been in this state
+    static uint8_t button0Count = 0;
+    // Track how long button 1 has been in this state
+    static uint8_t button1Count = 0;
+    // Bit field with the debounced states of the buttons
+    static uint8_t buttons_state = 0;
+    // Get the current high/low state
+    uint8_t current_states = (~PINB & BUTTONS_MASK);
+    // Check if the current state is a change from the stabilized state. If so,
+    // and it can do that successfully for a run of four times, then let it
+    // transition to the new state as the new stabilized state
+    if ((current_states & BUTTON0_MASK) != (buttons_state & BUTTON0_MASK))
+    {
+        // Button stayed the same, so count up to track if this is a run of
+        // consistentcy
+        ++button0Count;
+        if (button0Count >= 4)
+        {
+            // Button has stabilized for four checks
+            if (current_states & BUTTON0_MASK)
+            {
+                // New stable state is down
+                buttons_state |= BUTTON0_MASK;
+                // TODO: Handle new button state HERE
+            }
+            else
+            {
+                // New stable state is up
+                buttons_state &= ~BUTTON0_MASK;
+                // TODO: Handle new button state HERE
+            }
+        }
+    }
+    else
+    {
+        // Same as current state, so don't start counting it as a run of
+        // changed states
+        button0Count = 0;
+    }
+    if ((current_states & BUTTON1_MASK) != (buttons_state & BUTTON1_MASK))
+    {
+        // Button stayed the same, so count up to track if this is a run of
+        // consistentcy
+        ++button1Count;
+        if (button1Count >= 4)
+        {
+            // Button has stabilized for four checks
+            if (current_states & BUTTON1_MASK)
+            {
+                // New stable state is down
+                buttons_state |= BUTTON1_MASK;
+                // TODO: Handle new button state HERE
+            }
+            else
+            {
+                // New stable state is up
+                buttons_state &= ~BUTTON1_MASK;
+                // TODO: Handle new button state HERE
+            }
+        }
+    }
+    else
+    {
+        // Same as current state, so don't start counting it as a run of
+        // changed states
+        button1Count = 0;
+    }
 }
 
 /********************************************************************************
