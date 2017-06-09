@@ -437,6 +437,7 @@ Postcondition: Blue channel on if blue value > 0
 ********************************************************************************/
 ISR(TIMER2_OVF_vect)
 {
+    OCR2A = blue; // Update the timer in an ISR so that we have locking
     // Turn on blue LED
     // Only turn on the LED if we are running a cycle of more than 0
     if (blue>0)
@@ -453,6 +454,8 @@ Postcondition: Red channel turned on if red > 0. Green channnel turned on if
 ********************************************************************************/
 ISR(TIMER0_OVF_vect)
 {
+    OCR0A = red; // Update the timer in an ISR so that we have locking
+    OCR0B = green; // Update the timer in an ISR so that we have locking
     // Turn on LEDs if we are doing a cycle more than 0
     if (red>0)
     {
