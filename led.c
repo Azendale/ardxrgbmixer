@@ -151,7 +151,7 @@ static uint8_t g_displayFormat=DEC;
 static uint8_t g_autoCycleMaxValue=10;
 // When in fade mode, the amount, when we are on a pure color, that we fade
 // down toward 0
-static uint8_t g_autoCyclePureFadeDown=0;
+static uint8_t g_autoCyclePureFadeDown=3;
 // When in fade mode, delay between steps = this*some constant 
 static uint8_t g_autoCycleMult=100;
 // Fade mode or direct mixer mode
