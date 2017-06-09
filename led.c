@@ -125,6 +125,10 @@ Output:
 #define HEX 0
 #define DEC 1
 
+// Auto cycle fade mode or direct mixer mode
+#define DIRECTMODE 0
+#define FADEMODE 1
+
 // States for auto fade
 #define REDFADEDOWN 0
 #define REDFADEUP 1
@@ -140,6 +144,7 @@ Output:
 // in the ADC read interrupt
 static uint8_t red=4, green=0, blue=11;
 static uint8_t g_displayFormat=DEC;
+
 // When in fade mode, the highest value any one color can get
 static uint8_t g_autoCycleMaxValue=255;
 // When in fade mode, the amount, when we are on a pure color, that we fade
@@ -147,6 +152,8 @@ static uint8_t g_autoCycleMaxValue=255;
 static uint8_t g_autoCyclePureFadeDown=0;
 // When in fade mode, delay between steps = this*some constant 
 static uint8_t g_autoCycleMult=1;
+// Fade mode or direct mixer mode
+static uint8_t g_mode=DIRECTMODE;
 
 /********************************************************************************
 Purpose: Generate the next RGB color in the fade
@@ -382,7 +389,14 @@ static inline void debounce (void)
             {
                 // New stable state is down
                 buttons_state |= BUTTON1_MASK;
-                g_displayFormat = DEC;
+                if (DIRECTMODE == g_mode)
+                {
+                    g_mode = FADEMODE;
+                }
+                else
+                {
+                    g_mode = DIRECTMODE;
+                }
             }
             else
             {
