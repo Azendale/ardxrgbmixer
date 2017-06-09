@@ -401,6 +401,10 @@ int main(void)
     // Start a first conversion
     ADCSRA |= (1<<ADSC);
 
+    // Or tECH branding :)
+    shiftInPattern(0xDF40078F9B2D8000);
+    _delay_ms(2000);
+
     while (1)
     {
         shiftInPattern(colorToPattern(red, green, blue));
