@@ -1,12 +1,34 @@
 /*
 Author: Erik Andersen
 
+Hardware:
+ 9 TIL729 7-segment displays. Common Anode
+ 8 74HC595 Shift registers
+ 3 10K potentiometers
+ 1 Common Anode RGB LED
+ 66 680 Ohm resistors (3 for each RGB channel, 63 for each 7-segment
+    display segment)
+ Tons of wires and big breadboard!
+
 Input:
   3 Analog inputs (potentiometers) on analog pins A0-A2. Requires a
   reference on the Aref pin.
     A0: Red input
     A1: Green input
     A2: Blue input
+
+Output:
+  Digital pins 0-2 and 11-13.
+  0-2: RGB LED control
+    0: PWM output for red channel RGB LED. Set low for on (Common Anode)
+    1: PWM output for green channel RGB LED. Set low for on (Common Anode)
+    2: PWM output for blue channel RGB LED. Set low for on (Common Anode)
+  11-13: Shift register control (of 8 chained 74HC595 shift registers)
+    11: Display refresh (rising edge displays currently shifted data)
+    12: Shift clock (rising edge advances data in shift registers)
+    13: Data line for shift registers. Set low for on (TIL729 7-segment
+        displays are Common Anode)
+   
 */
 #include <avr/io.h>
 #include <util/delay.h>
@@ -46,8 +68,12 @@ Input:
 #define MASKE 0x7C
 #define MASKF 0x5C
 
+#define REDMASK (1<<DDD0)
+#define GREENMASK (1<<DDD1)
+#define BLUEMASK (1<<DDD2)
 
-
+// Global values because we need to update the displays in main, but set them
+// in the ADC read interrupt
 static uint8_t red=4, green=0, blue=11;
 
 
@@ -56,17 +82,18 @@ void updateTimers(uint8_t red, uint8_t green, uint8_t blue)
     // If the new value is less than the timer, the timer will never go off.
     // If the new value is 0, the light may get stuck on, leading to flickering
     // around ADC values of 0
+    // Remember that this is active low, so |= turns off
     if (TCNT0 >= red)
     {
-        PORTD |= (1<<DDD0);
+        PORTD |= REDMASK;
     }
     if (TCNT0 >= green)
     {
-        PORTD |= (1<<DDD1);
+        PORTD |= GREENMASK;
     }
     if (TCNT2 >= blue)
     {
-        PORTD |= (1<<DDD2);
+        PORTD |= BLUEMASK;
     }
     // Update compares
     OCR0A = red;
@@ -77,7 +104,7 @@ void updateTimers(uint8_t red, uint8_t green, uint8_t blue)
 ISR(TIMER2_COMPA_vect)
 {
     // End of cycle, set the bit for blue high to turn blue off
-    PORTD |= (1<<DDD2);
+    PORTD |= BLUEMASK;
 }
 
 ISR(TIMER2_OVF_vect)
@@ -86,7 +113,7 @@ ISR(TIMER2_OVF_vect)
     // Only turn on the LED if we are running a cycle of more than 0
     if (blue>0)
     {
-        PORTD &= ~(1<<DDD2);
+        PORTD &= ~BLUEMASK;
     }
 }
 
@@ -95,24 +122,24 @@ ISR(TIMER0_OVF_vect)
     // Turn on LEDs if we are doing a cycle more than 0
     if (red>0)
     {
-        PORTD &= ~(1<<DDD0);
+        PORTD &= ~REDMASK;
     }
     if (green>0)
     {
-        PORTD &= ~(1<<DDD1);
+        PORTD &= ~GREENMASK;
     }
 }
 
 ISR(TIMER0_COMPA_vect)
 {
     // Turn off red LED
-    PORTD |= (1<<DDD0);
+    PORTD |= REDMASK;
 }
 
 ISR(TIMER0_COMPB_vect)
 {
     // Turn off green LED
-    PORTD |= (1<<DDD1);
+    PORTD |= GREENMASK;
 }
 
 uint8_t getCharBits(uint8_t charVal)
@@ -157,7 +184,34 @@ uint8_t getCharBits(uint8_t charVal)
     {
         return MASK9;
     }
-    return 0x7C; // Do an E for Error
+    else if (10 == charVal)
+    {
+        return MASKA;
+    }
+    else if (11 == charVal)
+    {
+        return MASKB;
+    }
+    else if (12 == charVal)
+    {
+        return MASKC;
+    }
+    else if (13 == charVal)
+    {
+        return MASKD;
+    }
+    else if (14 == charVal)
+    {
+        return MASKE;
+    }
+    else if (15 == charVal)
+    {
+        return MASKF;
+    }
+    else
+    {
+        return MASKE; // Do an E for Error
+    }
 }
 
 uint32_t byteToDecPattern(uint8_t bite)
@@ -194,26 +248,29 @@ uint64_t colorToPattern(uint8_t red, uint8_t green, uint8_t blue)
 
 void shiftInPattern(uint64_t pattern)
 {
-                uint8_t i = 0; 
-                for (; i<64; ++i)
-                {
-                        // Shift line low
-                        PORTB &= ~(1<<DDB4);
-                        if ((pattern>>i)&(0x00000001))
-                        {
-                                PORTB &= ~(1<<DDB5);
-                        }
-                        else
-                        {
-                                PORTB |= (1<<DDB5);
-                        }
-                        // Shift line High
-                        PORTB |= (1<<DDB4);
-                }
-                // Latch line low
-                PORTB &= ~(1<<DDB3);
-                // Latch line high
-                PORTB |= (1<<DDB3);
+    uint8_t i = 0; 
+    for (; i<64; ++i)
+    {
+        // Set shift line low
+        PORTB &= ~(1<<DDB4);
+        // If the last bit in the pattern is 1
+        if ((pattern>>i)&(0x00000001))
+        {
+            // Set the data line low (remember we are active low)
+            PORTB &= ~(1<<DDB5);
+        }
+        else
+        {
+            // Set the data line high
+            PORTB |= (1<<DDB5);
+        }
+        // Set shift line High
+        PORTB |= (1<<DDB4);
+    }
+    // Set display refresh line low
+    PORTB &= ~(1<<DDB3);
+    // Set display refresh line high
+    PORTB |= (1<<DDB3);
 }
 
 ISR(ADC_vect)
@@ -239,58 +296,49 @@ ISR(ADC_vect)
 
 int main(void)
 {
-        // Seed random generator (random color mode)
-        srand(0);
+    // Set up shift register control pins
+    DDRB |= ((1<<DDB5)|(1<<DDB4)|(1<<DDB3));
+    // Set up RGB PWM pins
+    DDRD |= ((1<<DDD0)|(1<<DDD1)|(1<<DDD2));
+    
+    // Turn on interrupts
+    sei();
+    
+    // Set up Timer0
+    TCNT0 = 0;
+    OCR0A = red;
+    OCR0B = green;
+    // Enable interrupts for two compare matches and overflow
+    TIMSK0 |= ((1<<OCIE0B)|(1<<OCIE0A)|(1<<TOIE0));
+    // 1024 Prescaler
+    TCCR0B |= ((1<<CS02)|(1<<CS00));
 
-        // Set up shift register control pins
-        DDRB |= ((1<<DDB5)|(1<<DDB4)|(1<<DDB3));
-        // Set up RGB PWM pins
-        DDRD |= ((1<<DDD0)|(1<<DDD1)|(1<<DDD2));
-        
-        // Turn on interrupts
-        sei();
-        
-        // Set up Timer0
-        TCNT0 = 0;
-        OCR0A = red;
-        OCR0B = green;
-        // Enable interrupts for two compare matches and overflow
-        TIMSK0 |= ((1<<OCIE0B)|(1<<OCIE0A)|(1<<TOIE0));
-        // 1024 Prescaler
-        TCCR0B |= ((1<<CS02)|(1<<CS00));
+    // Set up Timer2
+    TCNT2 = 0;
+    OCR0A = blue;
+    // Enable interrupts for one compare match and overflow
+    TIMSK2 |= ((1<<OCIE2A)|(1<<TOIE2));
+    // 1024 Prescaler
+    TCCR2B |= ((1<<CS22)|(1<<CS20));
+    
+    // Set up ADC
+    // Set REFS0 and REFS1 to 0 to use external Aref
+    // Start at a single ended input of 0, so ADMUX[0-3] = 0
+    ADMUX |= ((1<<ADLAR));
+    // Free run mode
+    ADCSRA |= ((1<<ADEN)|(1<<ADATE)|(1<<ADIE)|(1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2));
+    // ADTS[0-2] already 0, which is free running mode
+    // Disable digital input buffers
+    DIDR0 |= ((1<<ADC0D)|(1<<ADC1D)|(1<<ADC2D));
+    // Make sure the power is on to the ADC
+    PRR &= ~(1<<PRADC);
+    // Start a first conversion
+    ADCSRA |= (1<<ADSC);
 
-        // Set up Timer0
-        TCNT2 = 0;
-        OCR0A = blue;
-        // Enable interrupts for two compare matches and overflow
-        TIMSK2 |= ((1<<OCIE2A)|(1<<TOIE2));
-        // 1024 Prescaler
-        TCCR2B |= ((1<<CS22)|(1<<CS20));
-        
-        // Set up ADC
-        // REFS0 and REFS1 0 to use external Aref
-        // Start at a single ended input of 0, so ADMUX[0-3] = 0
-        ADMUX |= ((1<<ADLAR));
-        // Free run mode
-        ADCSRA |= ((1<<ADEN)|(1<<ADATE)|(1<<ADIE)|(1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2));
-        // ADTS[0-2] already 0, which is free running mode
-        // Disable digital input buffers
-        DIDR0 |= ((1<<ADC0D)|(1<<ADC1D)|(1<<ADC2D));
-        // Make sure the power is on to the ADC
-        PRR &= ~(1<<PRADC);
-        // Start a conversion
-        ADCSRA |= (1<<ADSC);
-
-        uint64_t pattern = 0x00000000;
-        uint8_t i = 0;
     while (1)
     {
-                shiftInPattern(colorToPattern(red, green, blue));
-                _delay_ms(5);
-                // Pick a random color for now
-                //red = rand()%256;
-                //green = rand()%256;
-                //blue = rand()%256;
+        shiftInPattern(colorToPattern(red, green, blue));
+        _delay_ms(5);
     }
     return 0;
 }
