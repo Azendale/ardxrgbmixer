@@ -71,8 +71,6 @@ Output:
 
 #include <stdio.h>
 #include <stdlib.h>
-// Include Uart Libraries
-#include "uartDriver.h"
 
 // Note: These patterns are for a 7-segment wiring that is *not* standard.
 // This was to make wiring the 7-segments on a breadboard next to shift
