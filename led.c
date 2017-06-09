@@ -2,6 +2,7 @@
 Author: Erik Andersen <erik.b.andersen@gmail.com>
 Changed: 2017-06-08 (added lots of comments)
 Created: I honestly don't remember. :)
+License: GPLv3
 
 Purpose: Implement a RGB color mixer that uses potentiometers to individually
   select the values for the red, green, and blue channels.
@@ -13,6 +14,7 @@ Hardware:
  1 Common Anode RGB LED
  66 680 Ohm resistors (3 for each RGB channel, 63 for each 7-segment
     display segment)
+ 2 buttons
  Tons of wires and big breadboard!
 
 Wiring:
@@ -44,6 +46,10 @@ Wiring:
  connected to ardiuno digital pin 1.
  The blue cathode should be connected to a resistor and that resistor should be
  connected to ardiuno digital pin 2.
+ One button should have one side attached to digital pin 9. The other side
+ should go to ground.
+ The other button should have one side attached ot digital pin 10. The other
+ side should go to ground.
 
 Input:
   3 Analog inputs (potentiometers) on analog pins A0-A2. Requires a
@@ -236,7 +242,6 @@ Postcondition: Display output mode possibly changed
 ISR(TIMER1_COMPA_vect)
 {
     debounce();
-    //g_displayFormat = DEC;
 }
 
 /********************************************************************************
