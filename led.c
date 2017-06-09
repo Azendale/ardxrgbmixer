@@ -129,6 +129,8 @@ Output:
 #define DIRECTMODE 0
 #define FADEMODE 1
 
+#define FADEMULT 10000
+
 // States for auto fade
 #define REDFADEDOWN 0
 #define REDFADEUP 1
@@ -146,12 +148,12 @@ static uint8_t red=4, green=0, blue=11;
 static uint8_t g_displayFormat=DEC;
 
 // When in fade mode, the highest value any one color can get
-static uint8_t g_autoCycleMaxValue=255;
+static uint8_t g_autoCycleMaxValue=10;
 // When in fade mode, the amount, when we are on a pure color, that we fade
 // down toward 0
 static uint8_t g_autoCyclePureFadeDown=0;
 // When in fade mode, delay between steps = this*some constant 
-static uint8_t g_autoCycleMult=1;
+static uint8_t g_autoCycleMult=100;
 // Fade mode or direct mixer mode
 static uint8_t g_mode=DIRECTMODE;
 
@@ -798,7 +800,11 @@ int main(void)
             blue = colors&0x000000FF;
             updateTimers(red, green, blue);
             shiftInPattern(colorToPattern(red, green, blue));
-            _delay_us(2500*g_autoCycleMult);
+            uint8_t fadePause = 0;
+            for (fadePause=0; fadePause < g_autoCycleMult; ++fadePause)
+            {
+                _delay_us(FADEMULT);
+            }
         }
     }
     // Should never reach here
