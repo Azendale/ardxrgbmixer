@@ -146,6 +146,7 @@ Output:
 // in the ADC read interrupt
 static uint8_t red=4, green=0, blue=11;
 static uint8_t g_displayFormat=DEC;
+static uint8_t g_adc1, g_adc2, g_adc3;
 
 // When in fade mode, the highest value any one color can get
 static uint8_t g_autoCycleMaxValue=10;
@@ -680,34 +681,25 @@ ISR(ADC_vect)
     // First potentiometer
     if (0x01 == (ADMUX & 0x07))
     {
-        if (DIRECTMODE == g_mode)
-        {
-            red = ADCH;
-            // Mask out the current source selection bits, and then OR in the
-            // correct ones
-            ADMUX = (ADMUX & 0xF8) | (1<<MUX1);
-        }
+        g_adc1 = ADCH;
+        // Mask out the current source selection bits, and then OR in the
+        // correct ones
+        ADMUX = (ADMUX & 0xF8) | (1<<MUX1);
     }
     // second potentiometer
     else if (0x02 == (ADMUX & 0x07))
     {
-        if (DIRECTMODE == g_mode)
-        {
-            green = ADCH;
-            // Mask out the current source selection bits to set to 0
-            ADMUX = (ADMUX & 0xF8);
-        }
+        g_adc2 = ADCH;
+        // Mask out the current source selection bits to set to 0
+        ADMUX = (ADMUX & 0xF8);
     }
     // third potentiometer
     else if (0x00 == (ADMUX & 0x07))
     {
-        if (DIRECTMODE == g_mode)
-        {
-            blue = ADCH;
-            // Mask out the current source selection bits, and then OR in the
-            // correct ones
-            ADMUX = (ADMUX & 0xF8) | (1<<MUX0);
-        }
+        g_adc3 = ADCH;
+        // Mask out the current source selection bits, and then OR in the
+        // correct ones
+        ADMUX = (ADMUX & 0xF8) | (1<<MUX0);
     }
     // Update the PWM timers
     updateTimers(red, green, blue);
@@ -783,11 +775,17 @@ int main(void)
     {
         if (DIRECTMODE == g_mode)
         {
+            red = g_adc1;
+            green = g_adc2;
+            blue = g_adc3;
             shiftInPattern(colorToPattern(red, green, blue));
             _delay_ms(5);
         }
         else
         {
+            g_autoCycleMult = g_adc1;
+            g_autoCyclePureFadeDown = g_adc2;
+            g_autoCycleMaxValue = g_adc3;
             uint32_t colors = fadeNextStep();
             red = colors>>16;
             green = (colors>>8)&0x000000FF;
