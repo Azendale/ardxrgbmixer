@@ -291,7 +291,6 @@ static uint32_t fadeNextStep(void)
     returnValue |= green;
     returnValue <<= 8;
     returnValue |= blue;
-    returnValue <<= 8;
     return returnValue;
 }
 
@@ -682,25 +681,37 @@ ISR(ADC_vect)
 {
     // Figure out what we were reading by what admux is set to
     // Mask as bits except the source selection bits
+    // First potentiometer
     if (0x01 == (ADMUX & 0x07))
     {
-        red = ADCH;
-        // Mask out the current source selection bits, and then OR in the
-        // correct ones
-        ADMUX = (ADMUX & 0xF8) | (1<<MUX1);
+        if (DIRECTMODE == g_mode)
+        {
+            red = ADCH;
+            // Mask out the current source selection bits, and then OR in the
+            // correct ones
+            ADMUX = (ADMUX & 0xF8) | (1<<MUX1);
+        }
     }
+    // second potentiometer
     else if (0x02 == (ADMUX & 0x07))
     {
-        green = ADCH;
-        // Mask out the current source selection bits to set to 0
-        ADMUX = (ADMUX & 0xF8);
+        if (DIRECTMODE == g_mode)
+        {
+            green = ADCH;
+            // Mask out the current source selection bits to set to 0
+            ADMUX = (ADMUX & 0xF8);
+        }
     }
+    // third potentiometer
     else if (0x00 == (ADMUX & 0x07))
     {
-        blue = ADCH;
-        // Mask out the current source selection bits, and then OR in the
-        // correct ones
-        ADMUX = (ADMUX & 0xF8) | (1<<MUX0);
+        if (DIRECTMODE == g_mode)
+        {
+            blue = ADCH;
+            // Mask out the current source selection bits, and then OR in the
+            // correct ones
+            ADMUX = (ADMUX & 0xF8) | (1<<MUX0);
+        }
     }
     // Update the PWM timers
     updateTimers(red, green, blue);
@@ -785,6 +796,7 @@ int main(void)
             red = colors>>16;
             green = (colors>>8)&0x000000FF;
             blue = colors&0x000000FF;
+            updateTimers(red, green, blue);
             shiftInPattern(colorToPattern(red, green, blue));
             _delay_us(2500*g_autoCycleMult);
         }
