@@ -110,6 +110,9 @@ Output:
 #define SRCLKMASK (1<<DDB4)
 #define REFRESHMASK (1<<DDB3)
 
+// 0 if you want decimal output, 1 if you want hex
+#define HEXOUTPUT 0
+
 // Global values because we need to update the displays in main, but set them
 // in the ADC read interrupt
 static uint8_t red=4, green=0, blue=11;
@@ -272,14 +275,38 @@ uint32_t byteToDecPattern(uint8_t bite)
     return pattern;
 }
 
+uint32_t byteToHexPattern(uint8_t bite)
+{
+    uint32_t pattern = 0;
+    // Skip or'ing anything in. the default 0's will be a blank digit
+    pattern <<=7;
+    // Grab just the top 4 bits
+    pattern |= getCharBits(bite>>4);
+    pattern <<=7;
+    // Mask out the top 4 bits to get the last 4
+    pattern |= getCharBits(bite&0x0F);
+    return pattern;
+}
+
 uint64_t colorToPattern(uint8_t red, uint8_t green, uint8_t blue)
 {
     uint64_t pattern = 0;
-    pattern |= byteToDecPattern(red);
-    pattern <<=21;
-    pattern |= byteToDecPattern(green); 
-    pattern <<=21;
-    pattern |= byteToDecPattern(blue); 
+    if (HEXOUTPUT)
+    {
+        pattern |= byteToHexPattern(red);
+        pattern <<=21;
+        pattern |= byteToHexPattern(green);
+        pattern <<=21;
+        pattern |= byteToHexPattern(blue);
+    }
+    else
+    {
+        pattern |= byteToDecPattern(red);
+        pattern <<=21;
+        pattern |= byteToDecPattern(green);
+        pattern <<=21;
+        pattern |= byteToDecPattern(blue);
+    }
     pattern <<=1;
     return pattern;
 }
