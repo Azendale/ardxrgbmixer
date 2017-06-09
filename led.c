@@ -348,7 +348,14 @@ static inline void debounce (void)
             {
                 // New stable state is down
                 buttons_state |= BUTTON0_MASK;
-                g_displayFormat = HEX;
+                if (HEX == g_displayFormat)
+                {
+                    g_displayFormat = DEC;
+                }
+                else
+                {
+                    g_displayFormat = HEX;
+                }
             }
             else
             {
