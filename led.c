@@ -116,11 +116,13 @@ Output:
 #define BUTTONS_MASK (BUTTON0_MASK|BUTTON1_MASK)
 
 // 0 if you want decimal output, 1 if you want hex
-#define HEXOUTPUT 0
+#define HEX 0
+#define DEC 1
 
 // Global values because we need to update the displays in main, but set them
 // in the ADC read interrupt
 static uint8_t red=4, green=0, blue=11;
+static uint8_t g_displayFormat=HEX;
 
 /********************************************************************************
 Purpose: Update the compare values for the timers (to control PWM)
@@ -182,13 +184,12 @@ static inline void debounce (void)
             {
                 // New stable state is down
                 buttons_state |= BUTTON0_MASK;
-                // TODO: Handle new button state HERE
+                g_displayFormat = HEX;
             }
             else
             {
                 // New stable state is up
                 buttons_state &= ~BUTTON0_MASK;
-                // TODO: Handle new button state HERE
             }
         }
     }
@@ -210,13 +211,12 @@ static inline void debounce (void)
             {
                 // New stable state is down
                 buttons_state |= BUTTON1_MASK;
-                // TODO: Handle new button state HERE
+                g_displayFormat = DEC;
             }
             else
             {
                 // New stable state is up
                 buttons_state &= ~BUTTON1_MASK;
-                // TODO: Handle new button state HERE
             }
         }
     }
@@ -226,6 +226,17 @@ static inline void debounce (void)
         // changed states
         button1Count = 0;
     }
+}
+
+/********************************************************************************
+Purpose:Debounce buttons
+Precondition: None
+Postcondition: Display output mode possibly changed
+********************************************************************************/
+ISR(TIMER1_COMPA_vect)
+{
+    debounce();
+    //g_displayFormat = DEC;
 }
 
 /********************************************************************************
@@ -425,7 +436,7 @@ Postcondition: Pattern returned in the MSB end of the 64 bits
 uint64_t colorToPattern(uint8_t red, uint8_t green, uint8_t blue)
 {
     uint64_t pattern = 0;
-    if (HEXOUTPUT)
+    if (HEX == g_displayFormat)
     {
         pattern |= byteToHexPattern(red);
         pattern <<=21;
@@ -558,6 +569,19 @@ int main(void)
     PRR &= ~(1<<PRADC);
     // Start a first conversion
     ADCSRA |= (1<<ADSC);
+
+    // Set up Timer1 to do button debounce
+    // Prescale of 1024
+    TCCR1B |= ((1 << CS12) | (1 << CS10));
+    OCR1A = 156;
+    TIMSK1 |= (1 << OCIE1A);
+    TCNT1 = 0;
+
+    // Set buttons to inputs
+    DDRB &= ~(BUTTONS_MASK);
+    // Turn on pull up resistors for buttons
+    PORTB |= BUTTONS_MASK;
+
 
     // Or tECH branding :)
     shiftInPattern(0xDF40078F9B2D8000);
