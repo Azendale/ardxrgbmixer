@@ -71,6 +71,8 @@ Output:
 
 #include <stdio.h>
 #include <stdlib.h>
+// Include Uart Libraries
+#include "uartDriver.h"
 
 // Note: These patterns are for a 7-segment wiring that is *not* standard.
 // This was to make wiring the 7-segments on a breadboard next to shift
@@ -122,7 +124,7 @@ Output:
 // Global values because we need to update the displays in main, but set them
 // in the ADC read interrupt
 static uint8_t red=4, green=0, blue=11;
-static uint8_t g_displayFormat=HEX;
+static uint8_t g_displayFormat=DEC;
 
 /********************************************************************************
 Purpose: Update the compare values for the timers (to control PWM)
@@ -161,6 +163,16 @@ Postcondition: If new button stable button state, update display output format.
 ********************************************************************************/
 static inline void debounce (void)
 {
+    //printf(".\n");
+    if (0 == (~PINB & BUTTONS_MASK))
+    {
+        g_displayFormat = DEC;
+    }
+    else
+    {
+        g_displayFormat = HEX;
+    }
+    /*
     // Track how long button 0 has been in this state
     static uint8_t button0Count = 0;
     // Track how long button 1 has been in this state
@@ -226,6 +238,7 @@ static inline void debounce (void)
         // changed states
         button1Count = 0;
     }
+    */
 }
 
 /********************************************************************************
@@ -531,6 +544,22 @@ Postcondition: None (does not exit)
 ********************************************************************************/
 int main(void)
 {
+    // HiJack stdin
+    // Create File Pointers for in and out
+    /*
+    FILE uart_output = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
+    FILE uart_input = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
+
+    // Initialize the UART Driver
+    uart_init();
+
+    // Hijack STDIN/STDOUT and send then to the UART Driver
+    stdout = &uart_output;
+    stdin  = &uart_input;
+    */
+
+
+    
     // Set up shift register control pins
     DDRB |= (SERDATAMASK|SRCLKMASK|REFRESHMASK);
     // Set up RGB PWM pins
@@ -572,7 +601,7 @@ int main(void)
 
     // Set up Timer1 to do button debounce
     // Prescale of 1024
-    TCCR1B |= ((1 << CS12) | (1 << CS10));
+    TCCR1B |= ((1<<CS11) |(1 << CS10));
     OCR1A = 156;
     TIMSK1 |= (1 << OCIE1A);
     TCNT1 = 0;
@@ -581,6 +610,7 @@ int main(void)
     DDRB &= ~(BUTTONS_MASK);
     // Turn on pull up resistors for buttons
     PORTB |= BUTTONS_MASK;
+    
 
 
     // Or tECH branding :)
