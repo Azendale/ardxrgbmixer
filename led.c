@@ -170,7 +170,9 @@ static uint32_t fadeNextStep(void)
 {
     static uint8_t fadeState=REDGREENTRANSITION;
     static uint8_t subStepFadeStep=0;
-    uint8_t red, green, blue;
+    uint8_t red=0;
+    uint8_t green=0;
+    uint8_t blue=0;
     if (REDFADEDOWN == fadeState)
     {
         ++subStepFadeStep;
